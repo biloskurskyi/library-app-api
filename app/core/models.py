@@ -89,12 +89,15 @@ class BorrowRecord(models.Model):
         ordering = ['borrowed_at']
 
     def save(self, *args, **kwargs):
-        if not self.pk and not self.due_date:
+        # Якщо об'єкт новий і due_date не встановлено
+        if not self.pk and self.due_date is None:
+            if self.borrowed_at is None:
+                self.borrowed_at = timezone.now()
             self.due_date = self.borrowed_at + timedelta(days=30)
         super().save(*args, **kwargs)
 
     def is_overdue(self):
-        return self.due_date < timezone.now() and not self.returned_at
+        return self.due_date < timezone.now() and self.returned_at is None
 
     def __str__(self):
         return f'{self.book.title} borrowed by {self.member} on {self.borrowed_at}'

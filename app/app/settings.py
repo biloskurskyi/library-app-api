@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'user',
     'celery_folder',
     'books',
+    'borrow',
 ]
 
 MIDDLEWARE = [
