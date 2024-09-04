@@ -1,22 +1,18 @@
 import datetime
-from django.core.mail import send_mail
+
 import jwt
+from django.http import HttpResponse, JsonResponse
 from rest_framework import status
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.shortcuts import get_object_or_404
-from django.http import HttpResponse, JsonResponse
 
 from core.models import User
 
 from .serializers import UserSerializer
 from .tasks import send_activation_email
-from app import settings
 
-
-# Create your views here.
 
 class RegisterView(APIView):
     def post(self, request):
@@ -24,15 +20,7 @@ class RegisterView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
-        base_url = 'http://localhost:8321/api/activate/'
-
         if user.email:
-            # subject = 'Activate your account'
-            # message = f'Hello {user.name},\n\nPlease activate your account using the following link: {base_url}{user.id}/'
-            # from_email = settings.EMAIL_HOST_USER
-            # recipient_list = [user.email]
-            #
-            # send_mail(subject, message, from_email, recipient_list, fail_silently=False)
             send_activation_email.delay(user.email, user.name, user.id)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)

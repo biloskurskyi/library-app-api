@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'core',
     'user',
     'celery_folder',
+    'books',
 ]
 
 MIDDLEWARE = [
