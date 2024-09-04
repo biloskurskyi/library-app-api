@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import status
@@ -8,6 +9,7 @@ from rest_framework.views import APIView
 from core.models import Book, BorrowRecord, User
 
 from .serializers import BorrowRecordSerializer
+from .tasks import send_notification_email
 
 
 class BorrowBookView(APIView):
@@ -34,6 +36,22 @@ class BorrowBookView(APIView):
         book.available_copies -= 1
         book.save()
 
+        send_notification_email.delay(
+            subject='Book Borrowed',
+            message=f'You have successfully borrowed the book: {book.title}.',
+            recipient_list=[request.user.email]
+        )
+
+        User = get_user_model()
+        library_users = User.objects.filter(user_type=User.LIBRARY_USER)
+
+        library_emails = [user.email for user in library_users]
+        send_notification_email.delay(
+            subject="Book Borrowed Notification",
+            message=f"The book '{book.title}' was borrowed by {request.user.name} (Email: {request.user.email}).",
+            recipient_list=library_emails
+        )
+
         serializer = BorrowRecordSerializer(borrow_record)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -58,6 +76,22 @@ class ReturnBookView(APIView):
         book = borrow_record.book
         book.available_copies += 1
         book.save()
+
+        send_notification_email.delay(
+            subject="Book Returned",
+            message=f"You have successfully returned the book: {book.title}.",
+            recipient_list=[request.user.email]
+        )
+
+        User = get_user_model()
+        library_users = User.objects.filter(user_type=User.LIBRARY_USER)
+
+        library_emails = [user.email for user in library_users]
+        send_notification_email.delay(
+            subject="Book Returned Notification",
+            message=f"The book '{book.title}' was returned by {request.user.name} (Email: {request.user.email}).",
+            recipient_list=library_emails
+        )
 
         serializer = BorrowRecordSerializer(borrow_record)
         return Response(serializer.data, status=status.HTTP_200_OK)
