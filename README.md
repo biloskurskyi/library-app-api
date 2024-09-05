@@ -17,7 +17,7 @@ It is worth noting that when a user borrows or returns a book, an email notifica
 - Security: Environment variables are used for sensitive data (e.g., email server configuration, database credentials)     
 - Setup: The system can be run using docker-compose, with all necessary steps and information included in the README
       
-<span style="color:red;">**WARNING!**</span>       
+**WARNING!**       
 The `.env` file is **NOT** pushed to GitHub. This file must include the following items:      
 - `SECRET_KEY`='django-SECRET_KEY-example'     
 - `DEBUG`=True/False     
@@ -37,9 +37,9 @@ The `.env` file is **NOT** pushed to GitHub. This file must include the followin
 - `CELERY_RESULT_BACKEND`=redis://redis:1111/0     
 - `CELERY_TASK_ALWAYS_EAGER`=True/False      
 - `CELERY_EAGER_PROPAGATES_EXCEPTIONS`=True/False      
-- `PASSWORD_LENGTH`=int_number         
-<span style="color:red;">**WARNING!**</span>            
-         
+- `PASSWORD_LENGTH`=int_number     
+**WARNING!**              
+          
 1)Authentication    
     
 **localhost:8321/api/register/(POST)** - Registers a user (user_type: LIBRARY_USER = 0, VISITOR_USER = 1). You need to confirm your email by clicking the link in the confirmation email.    
