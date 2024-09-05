@@ -17,8 +17,10 @@ Tech Overview
 - Security: Environment variables are used for sensitive data (e.g., email server configuration, database credentials)     
 - Setup: The system can be run using docker-compose, with all necessary steps and information included in the README    
     
-API FUNCTIONALITY:      
-Authentication    
+API FUNCTIONALITY:   
+    
+1)Authentication    
+    
 localhost:8321/api/register/(POST) - Registers a user (user_type: LIBRARY_USER = 0, VISITOR_USER = 1). You need to confirm your email by clicking the link in the confirmation email.    
 Request Body:    
 {     
@@ -44,7 +46,43 @@ Key: Authorization
 Value: Bearer {jwt token}       
 Only LIBRARY_USER can delete their own account.       
      
-localhost:8321/api/delete-visitor/{id}/ - You need to include the following in the request headers:    
+localhost:8321/api/delete-visitor/{id}/(DELETE) - You need to include the following in the request headers:    
 Key: Authorization    
 Value: Bearer {jwt token}       
 Only LIBRARY_USER can delete a VISITOR_USER, provided that the VISITOR_USER has returned all borrowed books. LIBRARY_USER can not delete another LIBRARY_USER.     
+     
+localhost:8321/api/activate/{id}/ - This api will be in special letter, you need to click him to activate user.   
+     
+For all next sections you need to include the following in the request headers:   
+Key: Authorization    
+Value: Bearer {jwt token}  
+     
+2)Books   
+    
+localhost:8321/api/books/(GET) - List all books.    
+         
+localhost:8321/api/books/(POST) - Create a new book. Only accessible by users with LIBRARY_USER type.        
+{    
+    "title": "example title book",    
+    "author": "example author book",    
+    "total_copies": "5"    
+}    
+localhost:8321/api/book/{id}/(GET) - Retrieve a specific book by ID.    
+    
+localhost:8321/api/book/{id}/(PATCH) - Update a specific book by ID. Only accessible by users with LIBRARY_USER type.
+    
+localhost:8321/api/book/{id}/(DELETE) - Delete a specific book by ID. Only accessible by users with LIBRARY_USER type.
+    
+3)Borrow    
+    
+localhost:8321/api/borrow/{id}/(POST) - Borrow a book. Only visitors can borrow books. Sends notification emails to the user and library staff.    
+    
+localhost:8321/api/return/{id}/(POST) - Return a borrowed book. Only visitors can return books. Sends notification emails to the user and library staff.    
+    
+localhost:8321/api/user-borrowed-books/{id}/(GET) - Retrieve all borrowed books for a specific user. Only library staff can access this.    
+    
+localhost:8321/api/my-borrowed-books/(GET) - Retrieve all borrowed books for the authenticated user.    
+    
+4)Admin    
+    
+http://127.0.0.1:8321/admin/(GET) - Access the admin panel.    
