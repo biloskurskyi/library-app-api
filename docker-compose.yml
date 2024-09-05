@@ -12,9 +12,9 @@ services:
     volumes:
       - ./app:/app
     command: >
-     sh -c "python manage.py wait_for_db && 
-             python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+      sh -c "python manage.py wait_for_db && 
+              python manage.py migrate &&
+              python manage.py runserver 0.0.0.0:8000"
     env_file:
       - ./app/.env
     depends_on:
@@ -48,6 +48,21 @@ services:
       - redis
     depends_on:
       - redis
+
+  beat:
+    build:
+      context: .
+      dockerfile: ./app/Dockerfile
+    hostname: beat
+    entrypoint: celery
+    command: -A celery_folder.celery_app.app beat --loglevel=info
+    volumes:
+      - ./app:/app
+    links:
+      - redis
+    depends_on:
+      - redis
+
 
   flower:
     build:

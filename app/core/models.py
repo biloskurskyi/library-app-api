@@ -93,11 +93,8 @@ class BorrowRecord(models.Model):
         if not self.pk and self.due_date is None:
             if self.borrowed_at is None:
                 self.borrowed_at = timezone.now()
-            self.due_date = self.borrowed_at + timedelta(days=30)
+            self.due_date = self.borrowed_at + timedelta(minutes=1)
         super().save(*args, **kwargs)
-
-    def is_overdue(self):
-        return self.due_date < timezone.now() and self.returned_at is None
 
     def __str__(self):
         return f'{self.book.title} borrowed by {self.member} on {self.borrowed_at}'
