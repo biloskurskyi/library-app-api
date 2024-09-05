@@ -5,6 +5,10 @@ from .views import (BorrowBookView, MyBorrowedBooksView, ReturnBookView,
 
 app_name = 'borrow'
 
+"""
+URL patterns for borrow-related operations.
+"""
+
 urlpatterns = [
     path('borrow/<int:pk>/', BorrowBookView.as_view(), name='borrow-book'),
     path('return/<int:pk>/', ReturnBookView.as_view(), name='return-book'),

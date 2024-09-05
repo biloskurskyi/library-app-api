@@ -11,7 +11,13 @@ from app import settings
 
 
 class UserManager(BaseUserManager):
+    """
+    Custom manager for the User model.
+    """
     def create_user(self, email, password=None, **extra_fields):
+        """
+        Create and return a regular user with an email and password.
+        """
         if not email:
             raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
@@ -22,6 +28,9 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
+        """
+        Create and return a superuser with an email and password.
+        """
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
@@ -38,6 +47,9 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractUser):
+    """
+    Custom User model for the application.
+    """
     LIBRARY_USER = 0
     VISITOR_USER = 1
     USER_TYPE_CHOICES = ((LIBRARY_USER, 'LIBRARY USER'), (VISITOR_USER, 'VISITOR USER'),)
@@ -63,6 +75,9 @@ class User(AbstractUser):
             return f"{self.name} with email {self.email} (Visitor User)"
 
     def set_password(self, raw_password):
+        """
+        Set the password for the user after validating its strength.
+        """
         if len(raw_password) < int(config('PASSWORD_LENGTH')):
             raise ValidationError("Password must be at least 8 characters long.")
         if not re.search(r'[A-Z]', raw_password):
@@ -72,6 +87,9 @@ class User(AbstractUser):
 
 
 class Book(models.Model):
+    """
+    Model representing a book in the library.
+    """
     title = models.CharField(max_length=255)
     author = models.CharField(max_length=255)
     total_copies = models.PositiveIntegerField()
@@ -88,6 +106,9 @@ class Book(models.Model):
 
 
 class BorrowRecord(models.Model):
+    """
+    Model representing a record of a book borrowed by a user.
+    """
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     member = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     borrowed_at = models.DateTimeField(auto_now_add=True)
@@ -100,6 +121,9 @@ class BorrowRecord(models.Model):
         ordering = ['borrowed_at']
 
     def save(self, *args, **kwargs):
+        """
+        Save the borrow record, setting the due date if not provided.
+        """
         if not self.pk and self.due_date is None:
             if self.borrowed_at is None:
                 self.borrowed_at = timezone.now()

@@ -16,6 +16,10 @@ class BorrowBookView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, pk):
+        """
+        Borrow a book. Only visitors can borrow books.
+        Sends notification emails to the user and library staff.
+        """
         if request.user.user_type != request.user.VISITOR_USER:
             return Response({'detail': 'You do not have permission to borrow books.'},
                             status=status.HTTP_403_FORBIDDEN)
@@ -60,6 +64,10 @@ class ReturnBookView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, pk):
+        """
+        Return a borrowed book. Only visitors can return books.
+        Sends notification emails to the user and library staff.
+        """
         if request.user.user_type != request.user.VISITOR_USER:
             return Response({'detail': 'You do not have permission to return books.'},
                             status=status.HTTP_403_FORBIDDEN)
@@ -101,6 +109,9 @@ class UserBorrowedBooksView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request, user_id):
+        """
+        Retrieve all borrowed books for a specific user. Only library staff can access this.
+        """
         if request.user.user_type != request.user.LIBRARY_USER:
             return Response({'detail': 'You do not have permission to view borrowed books.'},
                             status=status.HTTP_403_FORBIDDEN)
@@ -129,6 +140,9 @@ class MyBorrowedBooksView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
+        """
+        Retrieve all borrowed books for the authenticated user.
+        """
         if request.user.user_type == request.user.LIBRARY_USER:
             return Response({'detail': 'You do not have permission to view borrowed books.'},
                             status=status.HTTP_403_FORBIDDEN)

@@ -16,6 +16,12 @@ from .tasks import send_activation_email
 
 
 class RegisterView(APIView):
+    """
+    Handles user registration. Validates the provided data, creates a new user, and sends an activation email.
+
+    POST request data should include 'email' and 'password'.
+    """
+
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -28,6 +34,12 @@ class RegisterView(APIView):
 
 
 class ActivateUserView(APIView):
+    """
+    Activates a user account. The user must be found by their ID and must not already be active.
+
+    GET request URL should include 'user_id'.
+    """
+
     def get(self, request, user_id):
         try:
             user = User.objects.get(id=user_id)
@@ -44,6 +56,12 @@ class ActivateUserView(APIView):
 
 
 class LoginView(APIView):
+    """
+    Authenticates a user and provides a JWT token upon successful login.
+
+    POST request data should include 'email' and 'password'.
+    """
+
     def post(self, request):
         email = request.data['email']
         password = request.data['password']
@@ -64,6 +82,11 @@ class LoginView(APIView):
 
 
 class LogoutView(APIView):
+    """
+    Handles user logout by deleting the JWT cookie.
+
+    Requires authentication.
+    """
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
@@ -76,6 +99,11 @@ class LogoutView(APIView):
 
 
 class DeleteUserView(APIView):
+    """
+    Allows a library user to delete their own account.
+
+    Requires authentication.
+    """
     permission_classes = (IsAuthenticated,)
 
     def delete(self, request):
@@ -91,6 +119,12 @@ class DeleteUserView(APIView):
 
 
 class DeleteVisitorUserView(APIView):
+    """
+    Allows a library user to delete a visitor user account, provided that the visitor does not have any active
+    borrow records.
+
+    Requires authentication.
+    """
     permission_classes = (IsAuthenticated,)
 
     def delete(self, request, user_id):

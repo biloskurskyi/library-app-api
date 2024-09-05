@@ -9,9 +9,16 @@ from .serializers import BookSerializer
 
 
 class BooksView(APIView):
+    """
+    View to list all books or create a new book.
+    """
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
+        """
+        Create a new book.
+        Only accessible by users with LIBRARY_USER type.
+        """
         user = request.user
         if user.user_type != user.LIBRARY_USER:
             return Response({'detail': 'You do not have permission to add books.'},
@@ -24,15 +31,24 @@ class BooksView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
+        """
+        List all books.
+        """
         books = Book.objects.all()
         serializer = BookSerializer(books, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class BookDetailView(APIView):
+    """
+    View to retrieve, update, or delete a specific book.
+    """
     permission_classes = (IsAuthenticated,)
 
     def get(self, request, pk):
+        """
+        Retrieve a specific book by ID.
+        """
         try:
             book = Book.objects.get(pk=pk)
         except Book.DoesNotExist:
@@ -42,6 +58,10 @@ class BookDetailView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def patch(self, request, pk):
+        """
+        Update a specific book by ID.
+        Only accessible by users with LIBRARY_USER type.
+        """
         user = request.user
         if user.user_type != user.LIBRARY_USER:
             return Response({'detail': 'You do not have permission to update books.'},
@@ -74,6 +94,10 @@ class BookDetailView(APIView):
         return Response(BookSerializer(book).data, status=status.HTTP_200_OK)
 
     def delete(self, request, pk):
+        """
+        Delete a specific book by ID.
+        Only accessible by users with LIBRARY_USER type.
+        """
         user = request.user
         if user.user_type != user.LIBRARY_USER:
             return Response({'detail': 'You do not have permission to delete books.'},

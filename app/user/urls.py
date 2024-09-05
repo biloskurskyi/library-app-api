@@ -5,6 +5,10 @@ from .views import (ActivateUserView, DeleteUserView, DeleteVisitorUserView,
 
 app_name = 'user'
 
+"""
+URL patterns for user-related operations including registration, activation, login, logout, and user deletion.
+"""
+
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('activate/<int:user_id>/', ActivateUserView.as_view(), name='activate_user'),
