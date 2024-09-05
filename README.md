@@ -38,7 +38,18 @@ The `.env` file is **NOT** pushed to GitHub. This file must include the followin
 - `CELERY_TASK_ALWAYS_EAGER`=True/False      
 - `CELERY_EAGER_PROPAGATES_EXCEPTIONS`=True/False      
 - `PASSWORD_LENGTH`=int_number     
-**WARNING!**              
+**WARNING!**  
+
+**How to start?!**
+1)Clone this repository: 
+**git clone <repo_url>**
+2)Navigate to the library-app-api folder and run the following command in your terminal:
+**docker-compose up --build**
+3)After the application builds, verify everything is working correctly by running:
+**docker-compose run --rm app sh -c "python manage.py wait_for_db && python manage.py test"**
+4)You're all set! Use the available API endpoints to create your library system.:)
+
+**API endpoints**
           
 1)Authentication    
     
