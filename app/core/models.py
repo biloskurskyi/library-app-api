@@ -1,6 +1,9 @@
+import re
 from datetime import timedelta
 
+from decouple import config
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
@@ -59,6 +62,14 @@ class User(AbstractUser):
         elif self.user_type == self.VISITOR_USER:
             return f"{self.name} with email {self.email} (Visitor User)"
 
+    def set_password(self, raw_password):
+        if len(raw_password) < int(config('PASSWORD_LENGTH')):
+            raise ValidationError("Password must be at least 8 characters long.")
+        if not re.search(r'[A-Z]', raw_password):
+            raise ValidationError("Password must contain at least one uppercase letter.")
+
+        super().set_password(raw_password)
+
 
 class Book(models.Model):
     title = models.CharField(max_length=255)
@@ -92,7 +103,7 @@ class BorrowRecord(models.Model):
         if not self.pk and self.due_date is None:
             if self.borrowed_at is None:
                 self.borrowed_at = timezone.now()
-            self.due_date = self.borrowed_at + timedelta(minutes=1)
+            self.due_date = self.borrowed_at + timedelta(days=30)
         super().save(*args, **kwargs)
 
     def __str__(self):
