@@ -89,7 +89,6 @@ class BorrowRecord(models.Model):
         ordering = ['borrowed_at']
 
     def save(self, *args, **kwargs):
-        # Якщо об'єкт новий і due_date не встановлено
         if not self.pk and self.due_date is None:
             if self.borrowed_at is None:
                 self.borrowed_at = timezone.now()

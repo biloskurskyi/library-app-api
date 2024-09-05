@@ -2,13 +2,14 @@ import datetime
 
 import jwt
 from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.models import User
+from core.models import BorrowRecord, User
 
 from .serializers import UserSerializer
 from .tasks import send_activation_email
@@ -72,3 +73,43 @@ class LogoutView(APIView):
             'message': 'success'
         }
         return response
+
+
+class DeleteUserView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def delete(self, request):
+        user = request.user
+
+        if user.user_type != user.LIBRARY_USER:
+            return JsonResponse({'error': 'Only library users can delete themselves.'},
+                                status=status.HTTP_403_FORBIDDEN)
+
+        user.delete()
+
+        return Response({'message': 'User deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+
+
+class DeleteVisitorUserView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def delete(self, request, user_id):
+        current_user = request.user
+
+        if current_user.user_type != User.LIBRARY_USER:
+            return JsonResponse({'error': 'Only library users can delete other users.'},
+                                status=status.HTTP_403_FORBIDDEN)
+
+        user_to_delete = get_object_or_404(User, id=user_id)
+
+        if user_to_delete.user_type == User.LIBRARY_USER:
+            return JsonResponse({'error': 'Cannot delete a library user.'}, status=status.HTTP_403_FORBIDDEN)
+
+        has_borrow_records = BorrowRecord.objects.filter(member=user_to_delete, returned_at__isnull=True).exists()
+        if has_borrow_records:
+            return JsonResponse({'error': 'Cannot delete user with existing borrow records.'},
+                                status=status.HTTP_403_FORBIDDEN)
+
+        user_to_delete.delete()
+
+        return Response({'message': 'Visitor user deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
