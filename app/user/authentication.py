@@ -5,7 +5,13 @@ from core.models import User
 
 
 class JWTAuthentication(authentication.BaseAuthentication):
+    """
+    Custom JWT authentication class for verifying and decoding tokens.
+    """
     def authenticate(self, request):
+        """
+        Authenticates a user based on JWT token in the Authorization header.
+        """
         auth_header = request.headers.get('Authorization')
 
         if not auth_header:

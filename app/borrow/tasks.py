@@ -8,6 +8,9 @@ from core.models import BorrowRecord
 
 @shared_task
 def send_notification_email(subject, message, recipient_list):
+    """
+    Send a notification email to the specified recipients.
+    """
     send_mail(
         subject,
         message,
@@ -18,6 +21,9 @@ def send_notification_email(subject, message, recipient_list):
 
 @shared_task
 def send_overdue_notifications():
+    """
+    Send overdue notifications for books that are past their due date.
+    """
     overdue_records = BorrowRecord.objects.filter(due_date__lt=timezone.now(), returned_at__isnull=True)
 
     for record in overdue_records:
