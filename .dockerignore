@@ -1,15 +1,12 @@
-#Git
 .git
 .gitignore
+.claude
+docs
+README.md
+CLAUDE.md
 
-#Docker
-.docker
+app/.env
 
-#Python
-app/__pycache__/
-app/*/__pycache__/
-app/*/*/__pycache__/
-app/*/*/*/__pycache__/
-.env/
-.venv/
-venv/
+**/__pycache__
+.venv
+venv
