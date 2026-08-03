@@ -8,6 +8,9 @@ class UserType(models.IntegerChoices):
 
 
 class UserManager(BaseUserManager):
+    def get_by_natural_key(self, email):
+        return self.get(email__iexact=email)
+
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
