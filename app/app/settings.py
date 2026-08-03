@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
 
     'users',
     'books',
@@ -76,6 +77,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
         'OPTIONS': {'min_length': PASSWORD_LENGTH},
+    },
+    {
+        'NAME': 'users.validators.UppercaseValidator',
     },
 ]
 
