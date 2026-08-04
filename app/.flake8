@@ -2,9 +2,8 @@
 exclude =
     migrations,
     __pycache__,
-    manage.py,
-    settings.py
+    manage.py
 
-ignore = F401, W503
+ignore = W503
 
 max-line-length = 120
