@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
+from django.db.models.functions import Lower
 
 
 class UserType(models.IntegerChoices):
@@ -8,6 +9,10 @@ class UserType(models.IntegerChoices):
 
 
 class UserManager(BaseUserManager):
+    @classmethod
+    def normalize_email(cls, email):
+        return super().normalize_email(email).lower()
+
     def get_by_natural_key(self, email):
         return self.get(email__iexact=email)
 
@@ -35,3 +40,8 @@ class User(AbstractUser):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
+
+    class Meta(AbstractUser.Meta):
+        constraints = [
+            models.UniqueConstraint(Lower('email'), name='unique_user_email_case_insensitive'),
+        ]

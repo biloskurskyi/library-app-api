@@ -2,11 +2,13 @@ import time
 from unittest import mock
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from books.models import Book
 from borrowing.models import Loan
+from common.throttling import AuthRateThrottle
 from users import services
 from users.models import UserType
 
@@ -21,7 +23,12 @@ def create_user(email='visitor@example.com', user_type=UserType.VISITOR, is_acti
     )
 
 
-class RegisterApiTests(APITestCase):
+class ThrottleClearTestCase(APITestCase):
+    def setUp(self):
+        cache.clear()
+
+
+class RegisterApiTests(ThrottleClearTestCase):
     @mock.patch('users.services.send_activation_email.delay')
     def test_register_creates_inactive_visitor(self, mock_delay):
         payload = {
@@ -36,7 +43,7 @@ class RegisterApiTests(APITestCase):
         self.assertEqual(res.data, {
             'id': user.id,
             'name': 'Visitor',
-            'email': 'Visitor@example.com',
+            'email': 'visitor@example.com',
             'user_type': UserType.VISITOR,
         })
         self.assertFalse(user.is_active)
@@ -62,6 +69,16 @@ class RegisterApiTests(APITestCase):
         )
         self.assertEqual(res.status_code, 400)
 
+    def test_register_case_variant_duplicate_email_fails(self):
+        create_user()
+        res = self.client.post(
+            '/api/users/',
+            {'name': 'Visitor', 'email': 'VISITOR@example.com', 'password': 'Password1'},
+        )
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.data['code'], 'VALIDATION_ERROR')
+        self.assertEqual(get_user_model().objects.count(), 1)
+
     def test_register_short_password_fails(self):
         res = self.client.post('/api/users/', {'name': 'Visitor', 'email': 'v@example.com', 'password': 'Pass1'})
         self.assertEqual(res.status_code, 400)
@@ -71,7 +88,7 @@ class RegisterApiTests(APITestCase):
         self.assertEqual(res.status_code, 400)
 
 
-class ActivationApiTests(APITestCase):
+class ActivationApiTests(ThrottleClearTestCase):
     def test_activate(self):
         user = create_user(is_active=False)
         res = self.client.get(f'/api/activate/{services.activation_token(user)}/')
@@ -100,7 +117,7 @@ class ActivationApiTests(APITestCase):
         self.assertFalse(user.is_active)
 
 
-class LoginApiTests(APITestCase):
+class LoginApiTests(ThrottleClearTestCase):
     def test_login(self):
         user = create_user()
         res = self.client.post('/api/login/', {'email': 'visitor@example.com', 'password': 'Password1'})
@@ -131,7 +148,7 @@ class LoginApiTests(APITestCase):
         self.assertEqual(res.status_code, 400)
 
 
-class LogoutApiTests(APITestCase):
+class LogoutApiTests(ThrottleClearTestCase):
     def test_logout_blacklists_refresh_token(self):
         create_user()
         login = self.client.post('/api/login/', {'email': 'visitor@example.com', 'password': 'Password1'})
@@ -140,6 +157,16 @@ class LogoutApiTests(APITestCase):
         self.assertEqual(res.status_code, 200)
         res = self.client.post('/api/logout/', {'refresh': refresh})
         self.assertEqual(res.status_code, 401)
+
+
+class ThrottleApiTests(ThrottleClearTestCase):
+    @mock.patch.object(AuthRateThrottle, 'THROTTLE_RATES', {'auth': '2/min'})
+    def test_auth_endpoint_throttled(self):
+        for _ in range(2):
+            self.client.post('/api/login/', {'email': 'v@example.com', 'password': 'Password1'})
+        res = self.client.post('/api/login/', {'email': 'v@example.com', 'password': 'Password1'})
+        self.assertEqual(res.status_code, 429)
+        self.assertEqual(res.data['code'], 'THROTTLED')
 
 
 class UserDestroyApiTests(APITestCase):

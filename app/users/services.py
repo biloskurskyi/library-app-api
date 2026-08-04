@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from django.core import signing
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
@@ -12,7 +12,11 @@ ACTIVATION_MAX_AGE = timedelta(days=3)
 
 
 def register(data):
-    user = User.objects.create_user(user_type=UserType.VISITOR, **data)
+    try:
+        with transaction.atomic():
+            user = User.objects.create_user(user_type=UserType.VISITOR, **data)
+    except IntegrityError:
+        raise ValidationError({'email': 'user with this email already exists.'})
     send_activation_email.delay(user.email, user.name, activation_token(user))
     return user
 
