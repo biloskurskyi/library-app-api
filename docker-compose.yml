@@ -48,7 +48,7 @@ services:
     build:
       context: .
       dockerfile: ./app/Dockerfile
-    command: celery -A app beat --loglevel=info
+    command: celery -A app beat --loglevel=info --schedule /tmp/celerybeat-schedule
     volumes:
       - ./app:/app
     env_file:
