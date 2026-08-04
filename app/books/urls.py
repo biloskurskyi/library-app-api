@@ -1,14 +1,8 @@
 from django.urls import path
 
-from .views import BookDetailView, BooksView
-
-app_name = 'books'
-
-"""
-URL patterns for books-related operations.
-"""
+from . import views
 
 urlpatterns = [
-    path('books/', BooksView.as_view(), name='books-info'),
-    path('book/<int:pk>/', BookDetailView.as_view(), name='book-detail'),
+    path('books/', views.BookListView.as_view()),
+    path('books/<int:pk>/', views.BookDetailView.as_view()),
 ]
