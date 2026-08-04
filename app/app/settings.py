@@ -69,6 +69,13 @@ DATABASES = {
     }
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': config('CACHE_URL', default='redis://redis:6379/1'),
+    },
+}
+
 AUTH_USER_MODEL = 'users.User'
 
 PASSWORD_LENGTH = config('PASSWORD_LENGTH', cast=int, default=8)
@@ -100,6 +107,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'EXCEPTION_HANDLER': 'common.exceptions.drf_exception_handler',
+    'DEFAULT_THROTTLE_RATES': {'auth': config('AUTH_THROTTLE_RATE', default='10/min')},
 }
 
 SIMPLE_JWT = {

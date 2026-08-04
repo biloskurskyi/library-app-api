@@ -13,6 +13,7 @@ class ErrorCode(Enum):
     PERMISSION_DENIED = 'PERMISSION_DENIED'
     NOT_FOUND = 'NOT_FOUND'
     METHOD_NOT_ALLOWED = 'METHOD_NOT_ALLOWED'
+    THROTTLED = 'THROTTLED'
     ERROR = 'ERROR'
 
 
@@ -23,6 +24,7 @@ _EXCEPTION_CODES = (
     (exceptions.PermissionDenied, ErrorCode.PERMISSION_DENIED),
     (exceptions.NotFound, ErrorCode.NOT_FOUND),
     (exceptions.MethodNotAllowed, ErrorCode.METHOD_NOT_ALLOWED),
+    (exceptions.Throttled, ErrorCode.THROTTLED),
     (Http404, ErrorCode.NOT_FOUND),
     (PermissionDenied, ErrorCode.PERMISSION_DENIED),
 )

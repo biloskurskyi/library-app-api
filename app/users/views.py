@@ -2,9 +2,11 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import (TokenBlacklistView,
+                                            TokenObtainPairView)
 
 from common.permissions import IsLibraryUser
+from common.throttling import AuthRateThrottle
 
 from . import services
 from .serializers import LoginSerializer, UserSerializer
@@ -12,6 +14,7 @@ from .serializers import LoginSerializer, UserSerializer
 
 class UserListView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         serializer = UserSerializer(data=request.data)
@@ -30,6 +33,7 @@ class UserDetailView(APIView):
 
 class ActivationView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
 
     def get(self, request, token):
         return Response({'detail': services.activate(token)})
@@ -37,3 +41,8 @@ class ActivationView(APIView):
 
 class LoginView(TokenObtainPairView):
     serializer_class = LoginSerializer
+    throttle_classes = [AuthRateThrottle]
+
+
+class LogoutView(TokenBlacklistView):
+    throttle_classes = [AuthRateThrottle]

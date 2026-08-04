@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 from django.test import TestCase
 
 from users.models import UserType
@@ -12,9 +13,14 @@ class UserManagerTests(TestCase):
             name='Visitor',
             user_type=UserType.VISITOR,
         )
-        self.assertEqual(user.email, 'Visitor@example.com')
+        self.assertEqual(user.email, 'visitor@example.com')
         self.assertFalse(user.is_active)
         self.assertTrue(user.check_password('Password1'))
+
+    def test_case_variant_email_rejected_by_constraint(self):
+        get_user_model().objects.create(email='visitor@example.com', name='Visitor', user_type=UserType.VISITOR)
+        with self.assertRaises(IntegrityError):
+            get_user_model().objects.create(email='Visitor@example.com', name='Other', user_type=UserType.VISITOR)
 
     def test_create_user_without_email(self):
         with self.assertRaisesMessage(ValueError, 'The Email field must be set'):
