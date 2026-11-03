@@ -1,0 +1,11 @@
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["migrations"]
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/migrations/*" = ["E501", "I", "UP"]
+"**/tests/*" = ["B011", "E501"]

@@ -1,14 +1,23 @@
+import sys
 from datetime import timedelta
 from pathlib import Path
 
 from celery.schedules import crontab
 from decouple import Csv, config
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-redacted')
-
 DEBUG = config('DEBUG', cast=bool, default=False)
+
+_TESTING = 'test' in sys.argv or 'pytest' in sys.modules
+
+SECRET_KEY = config('SECRET_KEY', default='')
+if not SECRET_KEY:
+    if DEBUG or _TESTING:
+        SECRET_KEY = 'django-insecure-dev-only-key'
+    else:
+        raise ImproperlyConfigured('SECRET_KEY must be set when DEBUG is off.')
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv(), default='localhost,127.0.0.1')
 
@@ -71,7 +80,7 @@ DATABASES = {
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'BACKEND': config('CACHE_BACKEND', default='django.core.cache.backends.redis.RedisCache'),
         'LOCATION': config('CACHE_URL', default='redis://redis:6379/1'),
     },
 }
