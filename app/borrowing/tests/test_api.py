@@ -19,7 +19,7 @@ class BorrowApiTests(APITestCase):
         self.book = create_book()
         self.client.force_authenticate(self.visitor)
 
-    @mock.patch('borrowing.services.send_notification_email.delay')
+    @mock.patch('borrowing.notifiers.send_notification_email.delay')
     def test_borrow(self, mock_delay):
         res = self.client.post('/api/loans/', {'book': self.book.pk})
         self.assertEqual(res.status_code, 201)
@@ -36,11 +36,12 @@ class BorrowApiTests(APITestCase):
         self.book.refresh_from_db()
         self.assertEqual(self.book.available_copies, 4)
 
-    @mock.patch('borrowing.services.send_notification_email.delay')
+    @mock.patch('borrowing.notifiers.send_notification_email.delay')
     def test_borrow_queues_borrower_and_active_staff_emails(self, mock_delay):
         create_user(email='staff@example.com', user_type=UserType.LIBRARY, name='Staff')
         create_user(email='inactive@example.com', user_type=UserType.LIBRARY, name='Gone', is_active=False)
-        self.client.post('/api/loans/', {'book': self.book.pk})
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post('/api/loans/', {'book': self.book.pk})
         borrower_call, staff_call = mock_delay.call_args_list
         self.assertEqual(borrower_call.args, (
             'Book Borrowed',
@@ -53,7 +54,7 @@ class BorrowApiTests(APITestCase):
             ['staff@example.com'],
         ))
 
-    @mock.patch('borrowing.services.send_notification_email.delay')
+    @mock.patch('borrowing.notifiers.send_notification_email.delay')
     def test_borrow_no_copies_fails(self, mock_delay):
         book = create_book(title='Empty', total_copies=0, available_copies=0)
         res = self.client.post('/api/loans/', {'book': book.pk})
@@ -61,7 +62,7 @@ class BorrowApiTests(APITestCase):
         self.assertEqual(res.data['detail'], ['No copies of this book are available.'])
         mock_delay.assert_not_called()
 
-    @mock.patch('borrowing.services.send_notification_email.delay')
+    @mock.patch('borrowing.notifiers.send_notification_email.delay')
     def test_double_borrow_fails(self, mock_delay):
         Loan.objects.create(book=self.book, member=self.visitor)
         res = self.client.post('/api/loans/', {'book': self.book.pk})
@@ -70,7 +71,7 @@ class BorrowApiTests(APITestCase):
         self.book.refresh_from_db()
         self.assertEqual(self.book.available_copies, 5)
 
-    @mock.patch('borrowing.services.send_notification_email.delay')
+    @mock.patch('borrowing.notifiers.send_notification_email.delay')
     def test_borrow_again_after_return(self, mock_delay):
         Loan.objects.create(book=self.book, member=self.visitor, returned_at=timezone.now())
         res = self.client.post('/api/loans/', {'book': self.book.pk})
@@ -105,9 +106,10 @@ class ReturnLoanApiTests(APITestCase):
         self.loan = Loan.objects.create(book=self.book, member=self.visitor)
         self.client.force_authenticate(self.visitor)
 
-    @mock.patch('borrowing.services.send_notification_email.delay')
+    @mock.patch('borrowing.notifiers.send_notification_email.delay')
     def test_return(self, mock_delay):
-        res = self.client.post(f'/api/loans/{self.loan.pk}/returned/')
+        with self.captureOnCommitCallbacks(execute=True):
+            res = self.client.post(f'/api/loans/{self.loan.pk}/returned/')
         self.assertEqual(res.status_code, 201)
         self.loan.refresh_from_db()
         self.assertIsNotNone(self.loan.returned_at)
@@ -123,7 +125,7 @@ class ReturnLoanApiTests(APITestCase):
         self.assertEqual(staff_call.args[0], 'Book Returned Notification')
         self.assertEqual(staff_call.args[1], "The book 'Dune' was returned by Visitor (Email: visitor@example.com).")
 
-    @mock.patch('borrowing.services.send_notification_email.delay')
+    @mock.patch('borrowing.notifiers.send_notification_email.delay')
     def test_return_increment_capped_at_total_copies(self, mock_delay):
         book = create_book(title='Shrunk', total_copies=1, available_copies=1)
         loan = Loan.objects.create(book=book, member=self.visitor)
@@ -132,7 +134,7 @@ class ReturnLoanApiTests(APITestCase):
         book.refresh_from_db()
         self.assertEqual(book.available_copies, 1)
 
-    @mock.patch('borrowing.services.send_notification_email.delay')
+    @mock.patch('borrowing.notifiers.send_notification_email.delay')
     def test_return_twice_fails(self, mock_delay):
         self.client.post(f'/api/loans/{self.loan.pk}/returned/')
         res = self.client.post(f'/api/loans/{self.loan.pk}/returned/')

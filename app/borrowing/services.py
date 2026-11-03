@@ -1,4 +1,5 @@
 from django.db import IntegrityError, transaction
+from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
@@ -10,13 +11,16 @@ from common.exceptions import (
     MemberRequired,
     StaffMemberNotAllowed,
 )
+from common.notifier import Notifier
 from users.models import User, UserType
 
+from .events import BookBorrowed, BookReturned
 from .models import Loan
-from .tasks import send_notification_email
+from .notifiers import CeleryEmailNotifier
 
 
-def borrow(actor, book_id):
+def borrow(actor: User, book_id: int, notifier: Notifier | None = None) -> Loan:
+    notifier = notifier or CeleryEmailNotifier()
     with transaction.atomic():
         book = get_object_or_404(Book.objects.select_for_update(), pk=book_id)
         if book.available_copies <= 0:
@@ -29,11 +33,12 @@ def borrow(actor, book_id):
             raise LoanAlreadyExists() from None
         book.available_copies -= 1
         book.save(update_fields=['available_copies'])
-    _queue_emails(book, actor, 'Borrowed')
+        notifier.publish(BookBorrowed(book.title, actor.name, actor.email))
     return loan
 
 
-def return_loan(actor, loan_id):
+def return_loan(actor: User, loan_id: int, notifier: Notifier | None = None) -> Loan:
+    notifier = notifier or CeleryEmailNotifier()
     with transaction.atomic():
         loan = Loan.objects.select_for_update().filter(
             pk=loan_id, member=actor, returned_at__isnull=True,
@@ -46,11 +51,11 @@ def return_loan(actor, loan_id):
         if book.available_copies < book.total_copies:
             book.available_copies += 1
             book.save(update_fields=['available_copies'])
-    _queue_emails(book, actor, 'Returned')
+        notifier.publish(BookReturned(book.title, actor.name, actor.email))
     return loan
 
 
-def active_loans(actor, member_id=None):
+def active_loans(actor: User, member_id: int | None = None) -> QuerySet[Loan]:
     if actor.user_type == UserType.VISITOR:
         return _active_loans_of(actor)
     if member_id is None:
@@ -61,22 +66,5 @@ def active_loans(actor, member_id=None):
     return _active_loans_of(member)
 
 
-def _active_loans_of(member):
+def _active_loans_of(member: User) -> QuerySet[Loan]:
     return member.loans.filter(returned_at__isnull=True)
-
-
-def _queue_emails(book, member, action):
-    send_notification_email.delay(
-        f'Book {action}',
-        f'You have successfully {action.lower()} the book: {book.title}.',
-        [member.email],
-    )
-    send_notification_email.delay(
-        f'Book {action} Notification',
-        f"The book '{book.title}' was {action.lower()} by {member.name} (Email: {member.email}).",
-        _staff_emails(),
-    )
-
-
-def _staff_emails():
-    return list(User.objects.filter(user_type=UserType.LIBRARY, is_active=True).values_list('email', flat=True))
