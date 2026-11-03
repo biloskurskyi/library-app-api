@@ -1,8 +1,7 @@
 from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from rest_framework.exceptions import (NotFound, PermissionDenied,
-                                       ValidationError)
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 
 from books.models import Book
 from users.models import User, UserType
@@ -21,7 +20,7 @@ def borrow(actor, book_id):
         try:
             loan = Loan.objects.create(book=book, member=actor)
         except IntegrityError:
-            raise ValidationError('You have already borrowed this book.')
+            raise ValidationError('You have already borrowed this book.') from None
         book.available_copies -= 1
         book.save(update_fields=['available_copies'])
     _queue_emails(book, actor, 'Borrowed')

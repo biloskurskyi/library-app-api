@@ -28,4 +28,4 @@ ENV PATH="/py/bin:$PATH"
 
 USER django-user
 
-CMD ["sh", "-c", "python manage.py wait_for_db && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
+CMD ["sh", "-c", "python manage.py wait_for_db && python manage.py migrate && gunicorn app.wsgi:application --bind 0.0.0.0:8000"]

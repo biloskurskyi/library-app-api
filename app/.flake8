@@ -1,9 +1,0 @@
-[flake8]
-exclude =
-    migrations,
-    __pycache__,
-    manage.py
-
-ignore = W503
-
-max-line-length = 120

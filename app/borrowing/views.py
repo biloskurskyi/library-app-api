@@ -6,8 +6,7 @@ from rest_framework.views import APIView
 from common.permissions import IsVisitor
 
 from . import services
-from .serializers import (CreateLoanSerializer, LoanFilterSerializer,
-                          LoanSerializer)
+from .serializers import CreateLoanSerializer, LoanFilterSerializer, LoanSerializer
 
 
 class LoanListView(APIView):

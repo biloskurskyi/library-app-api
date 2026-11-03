@@ -16,7 +16,7 @@ def register(data):
         with transaction.atomic():
             user = User.objects.create_user(user_type=UserType.VISITOR, **data)
     except IntegrityError:
-        raise ValidationError({'email': 'user with this email already exists.'})
+        raise ValidationError({'email': 'user with this email already exists.'}) from None
     send_activation_email.delay(user.email, user.name, activation_token(user))
     return user
 
@@ -29,7 +29,7 @@ def activate(token):
     try:
         user_id = signing.TimestampSigner().unsign(token, max_age=ACTIVATION_MAX_AGE)
     except signing.BadSignature:
-        raise ValidationError('Invalid or expired activation link.')
+        raise ValidationError('Invalid or expired activation link.') from None
     user = get_object_or_404(User, pk=user_id)
     if user.is_active:
         return 'User is active.'
