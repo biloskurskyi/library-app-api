@@ -80,7 +80,7 @@ DATABASES = {
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'BACKEND': config('CACHE_BACKEND', default='django.core.cache.backends.redis.RedisCache'),
         'LOCATION': config('CACHE_URL', default='redis://redis:6379/1'),
     },
 }
